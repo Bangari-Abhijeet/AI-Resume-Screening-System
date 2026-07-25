@@ -23,12 +23,14 @@ const authRoutes = require('./routes/authRoutes');
 const resumeRoutes = require('./routes/resumeRoutes');
 const analysisRoutes = require('./routes/analysisRoutes');
 const jobRoutes = require('./routes/jobRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Register routes
 app.use('/api/auth', authRoutes);
 app.use('/api/resumes', resumeRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/jobs', jobRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

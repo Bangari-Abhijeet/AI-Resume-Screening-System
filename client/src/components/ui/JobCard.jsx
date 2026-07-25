@@ -1,4 +1,4 @@
-import { Bookmark, ArrowRight, MapPin, DollarSign } from "lucide-react";
+import { Bookmark, MapPin, DollarSign } from "lucide-react";
 
 function JobCard({ job }) {
   return (

@@ -51,12 +51,12 @@ const atsCalculator = {
 
   scoreFormatting: (resumeData) => {
     try {
-      let formattingScore = 100;
+      let formattingScore = 20;
 
       // Deduct points for missing sections
-      if (!resumeData.experience) formattingScore -= 20;
-      if (!resumeData.education) formattingScore -= 15;
-      if (!resumeData.skills) formattingScore -= 15;
+      if (!resumeData.experience?.length) formattingScore -= 8;
+      if (!resumeData.education?.length) formattingScore -= 5;
+      if (!resumeData.skills?.length) formattingScore -= 7;
 
       return Math.max(0, formattingScore);
     } catch (error) {
@@ -67,15 +67,15 @@ const atsCalculator = {
 
   scoreReadability: (resumeText) => {
     try {
-      let readabilityScore = 100;
+      let readabilityScore = 10;
       
       // Check for common ATS issues
       if (resumeText.includes('image') || resumeText.includes('table')) {
-        readabilityScore -= 30;
+        readabilityScore -= 4;
       }
       
       if (resumeText.length < 100) {
-        readabilityScore -= 20;
+        readabilityScore -= 3;
       }
 
       return Math.max(0, readabilityScore);

@@ -1,4 +1,5 @@
-// Resume Analysis Controller
+const Resume = require('../models/Resume');
+const atsService = require('../services/atsService');
 
 const analysisController = {
   analyzeResume: async (req, res) => {
@@ -9,12 +10,14 @@ const analysisController = {
         return res.status(400).json({ message: 'Resume ID is required' });
       }
 
-      // TODO: Implement resume analysis logic using Gemini/AI
+      const resume = await Resume.findOne({ _id: resumeId, userId: req.user.id });
+      if (!resume) return res.status(404).json({ message: 'Resume not found' });
+      const compatibility = atsService.validateATSCompatibility(resume.parsedData);
       res.status(200).json({ 
         analysis: {
-          strengths: [],
-          weaknesses: [],
-          suggestions: []
+          strengths: resume.parsedData.skills?.length ? [`${resume.parsedData.skills.length} skills identified`] : [],
+          weaknesses: [...compatibility.issues, ...compatibility.warnings],
+          suggestions: compatibility.recommendations
         }
       });
     } catch (error) {
@@ -30,10 +33,14 @@ const analysisController = {
         return res.status(400).json({ message: 'Resume ID is required' });
       }
 
-      // TODO: Implement ATS score calculation
+      const resume = await Resume.findOne({ _id: resumeId, userId: req.user.id });
+      if (!resume) return res.status(404).json({ message: 'Resume not found' });
+      const score = await atsService.calculateScore({ ...resume.parsedData, extractedText: resume.extractedText });
+      resume.atsScore = score.totalScore;
+      await resume.save();
       res.status(200).json({ 
-        atsScore: 0,
-        details: {}
+        atsScore: score.totalScore,
+        details: score
       });
     } catch (error) {
       res.status(500).json({ message: 'ATS calculation failed', error: error.message });
@@ -49,11 +56,14 @@ const analysisController = {
         return res.status(400).json({ message: 'Resume ID and job description are required' });
       }
 
-      // TODO: Implement resume-JD comparison
+      const resume = await Resume.findOne({ _id: resumeId, userId: req.user.id });
+      if (!resume) return res.status(404).json({ message: 'Resume not found' });
+      const result = await atsService.calculateScore({ ...resume.parsedData, extractedText: resume.extractedText }, jobDescription);
       res.status(200).json({ 
-        matchScore: 0,
-        matchedKeywords: [],
-        missingKeywords: []
+        matchScore: result.totalScore,
+        matchedKeywords: result.details.matchedKeywords,
+        missingKeywords: result.details.missingKeywords,
+        recommendations: result.details.recommendations
       });
     } catch (error) {
       res.status(500).json({ message: 'Comparison failed', error: error.message });

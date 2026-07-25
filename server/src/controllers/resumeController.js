@@ -1,4 +1,7 @@
-// Resume Controller
+const fs = require('fs');
+const Resume = require('../models/Resume');
+const pdfExtractor = require('../utils/pdfExtractor');
+const atsService = require('../services/atsService');
 
 const resumeController = {
   uploadResume: async (req, res) => {
@@ -7,10 +10,22 @@ const resumeController = {
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
-      // TODO: Implement resume upload logic
+      const extractedText = await pdfExtractor.extractTextFromFile(req.file.path);
+      const parsedData = pdfExtractor.parseResumeData(extractedText);
+      const atsResult = await atsService.calculateScore({ ...parsedData, extractedText });
+      const resume = await Resume.create({
+        userId: req.user.id,
+        fileName: req.file.originalname,
+        filePath: req.file.path,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        extractedText,
+        parsedData,
+        atsScore: atsResult.totalScore,
+      });
       res.status(201).json({ 
         message: 'Resume uploaded successfully',
-        file: req.file.filename 
+        resume
       });
     } catch (error) {
       res.status(500).json({ message: 'Upload failed', error: error.message });
@@ -25,8 +40,8 @@ const resumeController = {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
-      // TODO: Fetch user's resumes from database
-      res.status(200).json({ resumes: [] });
+      const resumes = await Resume.find({ userId, isActive: true }).sort({ uploadedAt: -1 });
+      res.status(200).json({ resumes });
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch resumes', error: error.message });
     }
@@ -36,7 +51,10 @@ const resumeController = {
     try {
       const { resumeId } = req.params;
 
-      // TODO: Implement resume deletion logic
+      const resume = await Resume.findOne({ _id: resumeId, userId: req.user.id });
+      if (!resume) return res.status(404).json({ message: 'Resume not found' });
+      if (resume.filePath && fs.existsSync(resume.filePath)) fs.unlinkSync(resume.filePath);
+      await resume.deleteOne();
       res.status(200).json({ message: 'Resume deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Deletion failed', error: error.message });
@@ -47,8 +65,9 @@ const resumeController = {
     try {
       const { resumeId } = req.params;
 
-      // TODO: Fetch resume details
-      res.status(200).json({ resume: {} });
+      const resume = await Resume.findOne({ _id: resumeId, userId: req.user.id });
+      if (!resume) return res.status(404).json({ message: 'Resume not found' });
+      res.status(200).json({ resume });
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch resume', error: error.message });
     }

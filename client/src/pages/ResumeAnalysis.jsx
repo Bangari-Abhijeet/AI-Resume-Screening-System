@@ -1,49 +1,10 @@
-import React from "react";
-import { atsBreakdown, analysisHighlights } from "../data/dummyData";
-import ProgressRing from "../components/ui/ProgressRing";
+import { useState } from "react";
 
 function ResumeAnalysis() {
-  return (
-    <div className="space-y-6">
-      <header>
-        <h2 className="text-2xl font-semibold">Resume Analysis</h2>
-        <p className="text-sm text-slate-600">Detailed ATS breakdown and highlight suggestions.</p>
-      </header>
-
-      <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="col-span-2 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h4 className="text-lg font-semibold">ATS Breakdown</h4>
-          <div className="mt-4 space-y-4">
-            {atsBreakdown.map((a) => (
-              <div key={a.section} className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold">{a.section}</p>
-                  <p className="text-sm text-slate-500">{a.details}</p>
-                </div>
-                <div className="w-28 text-right">
-                  <ProgressRing value={a.score} label="" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <aside className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h4 className="text-lg font-semibold">Highlights</h4>
-            <ul className="mt-4 space-y-3 text-sm text-slate-700">
-              {analysisHighlights.map((h) => (
-                <li key={h.title} className="rounded-md bg-slate-50 p-3">
-                  <p className="font-semibold">{h.title}</p>
-                  <p className="text-xs text-slate-500">{h.pointer || h.value}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </aside>
-      </section>
-    </div>
-  );
+  const [resume] = useState(() => JSON.parse(localStorage.getItem('latestResume') || 'null'));
+  if (!resume) return <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6"><h2 className="text-2xl font-semibold">Resume analysis</h2><p className="mt-2 text-sm text-slate-600">Upload a resume to view extracted results.</p></div>;
+  const data = resume.parsedData || {};
+  const sections = [['Summary', data.summary], ['Skills', data.skills?.join(', ')], ['Experience', data.experience?.map((item) => item.description || item.title).join(' · ')], ['Education', data.education?.map((item) => item.degree || item).join(' · ')], ['Projects', data.projects?.map((item) => item.description || item.title).join(' · ')]];
+  return <div className="space-y-6"><header><h2 className="text-2xl font-semibold">Your resume analysis</h2><p className="text-sm text-slate-600">Information extracted from {resume.fileName}.</p></header><section className="grid gap-4">{sections.map(([title, value]) => <article key={title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h3 className="font-semibold">{title}</h3><p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{value || `No ${title.toLowerCase()} detected.`}</p></article>)}</section></div>;
 }
-
 export default ResumeAnalysis;
