@@ -3,6 +3,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -46,8 +47,16 @@ const errorMiddleware = require('./middleware/errorMiddleware');
 app.use(errorMiddleware);
 
 // 404 handler
-app.use((req, res) => {
+app.use('/api', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
+});
+
+const clientBuildPath = path.join(__dirname, '../../client/dist');
+app.use(express.static(clientBuildPath));
+// Express 5 requires a named wildcard parameter. This serves the React app for
+// every non-API route while keeping client-side routing working in production.
+app.get('/{*splat}', (req, res) => {
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
 module.exports = app;

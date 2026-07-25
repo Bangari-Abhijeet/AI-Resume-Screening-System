@@ -1,6 +1,6 @@
 import { fetcher } from './api';
 
-const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
 const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('token') || ''}` });
 
 export async function uploadResume(file) {
